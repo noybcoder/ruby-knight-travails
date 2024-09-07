@@ -1,41 +1,68 @@
-# moves = [
-#   [-1, 2], [-1, -2], [1, 2], [1, -2],
-#   [-2, 1], [-2, -1], [-1, 2], [-1, -2]
-# ]
-
 # source = [0, 0]
 # destination = [3, 3]
-# path = []
+# path = [source]
 # queue = [source]
+
 
 # until queue.empty?
 #   current = queue.shift
-#   path << current
 #   p current
 #   moves.each do |move|
-#     x, y  = source[0] + move[0], source[1] + move[1]
-#     queue << [x, y] if x.between?(0, 7) && y.between?(0, 7) && !path.include?([x, y])
+#     x, y = current[0] + move[0], current[1] + move[1]
+#     if x.between?(0, 7) && y.between?(0, 7)
+#       new_post = [x, y]
+#       unless path.include?(new_post)
+#         path << new_post
+#         queue << new_post
+#       end
+#     end
+#     break if path.include?(destination)
 #   end
 # end
 
+class Knight
+  class Node
+    attr_accessor :position, :parent
 
-adj_list = [
-  [1, 6, 8],
-  [0, 4, 6, 9],
-  [4, 6],
-  [4, 5, 8],
-  [1, 2, 3, 5, 9],
-  [3, 4],
-  [0, 1, 2],
-  [8, 9],
-  [0, 3, 7],
-  [1, 4, 7]
-]
+    def initialize(position, parent = nil)
+      @position = position
+      @parent = parent
+    end
+  end
 
-queue = adj_list[0]
-visited = Array.new(adj_list.flatten.uniq.length)
+  private_constant :Node
+  attr_accessor :piece
 
-until queue.empty?
-  current = queue.shift
+  MOVES = [
+    [-1, 2], [-1, -2], [1, 2], [1, -2],
+    [-2, 1], [-2, -1], [2, 1], [2, -1]
+  ]
+  @@path = []
+
+  def initialize
+    @piece = nil
+  end
+
+  def get_possible_moves(position)
+    parent = Node.new(position)
+    self.piece = parent if self.piece.nil?
+
+    MOVES.reduce([]) do |output, move|
+      new_position = [position[0] + move[0], position[1] + move[1]]
+      if valid?(new_position) && !@@path.include?(new_position)
+        node = Node.new(new_position, parent)
+        output << node
+        @@path << node
+      end
+      output
+    end
+  end
+
+  def valid?(new_position)
+    new_position[0].between?(0, 7) && new_position[1].between?(0, 7)
+  end
 
 end
+
+k = Knight.new
+p k.get_possible_moves([0, 0])
