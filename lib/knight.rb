@@ -31,38 +31,73 @@ class Knight
     [-2, 1], [-2, -1], [2, 1], [2, -1]
   ].freeze
 
+  # Public: Initializes the Knight object.
+  #
+  # visited: An array to store the positions the knight has already visited,
+  # preventing revisiting them and causing infinite loops.
+  #
+  # Returns a new Knight object.
   def initialize
     @visited = []
   end
 
-  def next_possible_moves(node)
-    MOVES.map { |dx, dy| [node.position[0] + dx, node.position[1] + dy] }
-         .select { |location| valid?(location) && !@visited.include?(location) }
-         .map { |location| Node.new(location, node) }
-  end
-
-  def valid?(new_position)
-    new_position.all? { |coordinates| coordinates.between?(0, 7) }
-  end
-
-  def get_path(node, path = [])
-    path << node.position
-    node.parent ? get_path(node.parent, path) : path
-  end
-
+  # Public: Finds the shortest path for the knight from the initial location to the final location using BFS.
+  #
+  # initial_location - The starting position of the knight as an array [x, y].
+  # final_location - The target position where the knight must move.
+  #
+  # Returns an array representing the shortest path from the initial to the final location.
   def knight_move(initial_location, final_location)
-    queue = [Node.new(final_location)]
-    @visited << final_location
+    # Start the BFS with the final location, marking it as visited
+    queue = [Node.new(final_location)] # Initialize the queue with the final location as a node
+    @visited << final_location # Mark the final location as visited
 
+    # Continue exploring the queue until it's empty or the initial location is found
     until queue.empty?
-      current = queue.shift
+      current = queue.shift # Dequeue the first node (FIFO)
+      # If the current position is the initial location, return the constructed path
       return get_path(current) if current.position == initial_location
 
+      # For each valid move from the current position, enqueue the new node
       next_possible_moves(current).each { |move| queue << move }
+      # Mark the current position as visited to avoid reprocessing
       @visited << current.position
     end
   end
-end
 
-k = Knight.new
-p k.knight_move([0, 0], [7, 7])
+  private
+
+  # Private: Returns an array of valid next possible moves from the current position.
+  #
+  # node - The current node, representing the knight's current position on the board.
+  #
+  # Returns an array of Node objects representing valid moves.
+  def next_possible_moves(node)
+    MOVES.map { |dx, dy| [node.position[0] + dx, node.position[1] + dy] } # Calculate new positions
+         .select { |location| valid?(location) && !@visited.include?(location) } # Filter out invalid/visited locations
+         .map { |location| Node.new(location, node) } # Create new nodes for each valid move
+  end
+
+  # Private: Checks if the given position is valid (i.e., within the boundaries of the chessboard).
+  #
+  # new_position - The position being checked as an array [x, y].
+  #
+  # Returns true if the position is within the bounds (0..7 for both x and y); otherwise, false.
+  def valid?(new_position)
+    # Ensure both coordinates are within board limits
+    new_position.all? { |coordinates| coordinates.between?(0, 7) }
+  end
+
+  # Private: Recursively constructs the path from the final node back to the initial node.
+  #
+  # node - The current node being traced back.
+  # path - An array that accumulates the positions along the path (default: []).
+  #
+  # This method works by recursively following the parent nodes from the target to the starting position.
+  #
+  # Returns an array of positions representing the path.
+  def get_path(node, path = [])
+    path << node.position # Add the current node's position to the path
+    node.parent ? get_path(node.parent, path) : path # Recursively trace the parent node until the root is reached
+  end
+end
