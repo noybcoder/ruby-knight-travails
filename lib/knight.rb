@@ -1,68 +1,68 @@
-# source = [0, 0]
-# destination = [3, 3]
-# path = [source]
-# queue = [source]
+# frozen_string_literal: true
 
-
-# until queue.empty?
-#   current = queue.shift
-#   p current
-#   moves.each do |move|
-#     x, y = current[0] + move[0], current[1] + move[1]
-#     if x.between?(0, 7) && y.between?(0, 7)
-#       new_post = [x, y]
-#       unless path.include?(new_post)
-#         path << new_post
-#         queue << new_post
-#       end
-#     end
-#     break if path.include?(destination)
-#   end
-# end
-
+# Knight class that represents the knight piece in chess and can calculate
+# the shortest path from one position to another on the chessboard.
 class Knight
+  # Inner class Node represents a position on the chessboard and tracks its parent node
+  # to enable the backtracking of the knight's path.
   class Node
+    # Allows read and write access to the position and parent attributes.
     attr_accessor :position, :parent
 
+    # Public: Initializes a new Node instance.
+    #
+    # position - An array representing the coordinates of the node on the chessboard.
+    # parent - The parent Node from which this node was reached, used for backtracking the path (default: nil).
+    #
+    # Returns a new Node object.
     def initialize(position, parent = nil)
       @position = position
       @parent = parent
     end
   end
 
+  # Makes the Node class private to encapsulate the node structure within the Knight class.
   private_constant :Node
-  attr_accessor :piece
 
+  # MOVES constant defines all possible moves a knight can make on a chessboard.
+  # Each pair of numbers represents the change in x and y coordinates for a valid knight move.
   MOVES = [
     [-1, 2], [-1, -2], [1, 2], [1, -2],
     [-2, 1], [-2, -1], [2, 1], [2, -1]
-  ]
-  @@path = []
+  ].freeze
 
   def initialize
-    @piece = nil
+    @visited = []
   end
 
-  def get_possible_moves(position)
-    parent = Node.new(position)
-    self.piece = parent if self.piece.nil?
-
-    MOVES.reduce([]) do |output, move|
-      new_position = [position[0] + move[0], position[1] + move[1]]
-      if valid?(new_position) && !@@path.include?(new_position)
-        node = Node.new(new_position, parent)
-        output << node
-        @@path << node
-      end
-      output
-    end
+  def next_possible_moves(node)
+    MOVES.map { |dx, dy| [node.position[0] + dx, node.position[1] + dy] }
+         .select { |location| valid?(location) && !@visited.include?(location) }
+         .map { |location| Node.new(location, node) }
   end
 
   def valid?(new_position)
-    new_position[0].between?(0, 7) && new_position[1].between?(0, 7)
+    new_position.all? { |coordinates| coordinates.between?(0, 7) }
   end
 
+  def get_path(node, path = [])
+    path << node.position
+    node.parent ? get_path(node.parent, path) : path
+  end
+
+  def knight_move(initial_location, final_location)
+    queue = [Node.new(final_location)]
+    @visited << final_location
+
+    until queue.empty?
+      current = queue.shift
+      return get_path(current) if current.position == initial_location
+
+      next_possible_moves(current).each { |move| queue << move }
+      @visited << current.position
+    end
+  end
 end
 
 k = Knight.new
-p k.get_possible_moves([0, 0])
+p k.knight_move([0, 0], [7, 7])
